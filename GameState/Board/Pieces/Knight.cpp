@@ -1,5 +1,5 @@
 #include "Knight.h"
-#include "Board.h"
+#include "../Board.h"
 
 Type Knight::getType() const
 {

@@ -1,5 +1,5 @@
 #include "Piece.h"
-#include "Board.h"
+#include "../../Board.h"
 
 Piece::Piece(Color color) : pieceColor{ color } {}
 

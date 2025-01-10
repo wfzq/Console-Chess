@@ -1,9 +1,40 @@
 #include "Board.h"
 #include "Pieces/Abstract/Piece.h"
 #include <stdexcept>
+#include "Pieces/Pawn.h"
+#include "Pieces/Rook.h"
+#include "Pieces/Knight.h"
+#include "Pieces/Bishop.h"
+#include "Pieces/Queen.h"
+#include "Pieces/King.h"
 
 Board::Board()
 {
+	place(0, 0, Type::ROOK, Color::WHITE);
+	place(0, 1, Type::KNIGHT, Color::WHITE);
+	place(0, 2, Type::BISHOP, Color::WHITE);
+	place(0, 3, Type::QUEEN, Color::WHITE);
+	place(0, 4, Type::KING, Color::WHITE);
+	place(0, 5, Type::BISHOP, Color::WHITE);
+	place(0, 6, Type::KNIGHT, Color::WHITE);
+	place(0, 7, Type::ROOK, Color::WHITE);
+	for (int i = 0; i < 8; i++)
+	{
+		place(1, i, Type::PAWN, Color::WHITE);
+	}
+
+	place(7, 0, Type::ROOK, Color::BLACK);
+	place(7, 1, Type::KNIGHT, Color::BLACK);
+	place(7, 2, Type::BISHOP, Color::BLACK);
+	place(7, 3, Type::QUEEN, Color::BLACK);
+	place(7, 4, Type::KING, Color::BLACK);
+	place(7, 5, Type::BISHOP, Color::BLACK);
+	place(7, 6, Type::KNIGHT, Color::BLACK);
+	place(7, 7, Type::ROOK, Color::BLACK);
+	for (int i = 0; i < 8; i++)
+	{
+		place(6, i, Type::PAWN, Color::BLACK);
+	}
 }
 
 Board::Board(const Board& b)
@@ -23,7 +54,7 @@ Board::Board(const Board& b)
 
 /*
 	Return values:
-
+	-2 - No king
 	-1 - Invalid move
 	 0 - Successful move
 	 1 - Checkmate by White
@@ -46,14 +77,51 @@ int Board::move(const Coords& c)
 	else return -1;
 }
 
+Color Board::getTurnColor() const
+{
+	return playerTurn;
+}
+
 Piece* Board::getPiece(int x, int y) const
 {
 	return board[x][y].get();
 }
 
+int Board::getEnPassantX() const
+{
+	return enPassantX;
+}
+
 void Board::setTurnColor(Color color)
 {
 	playerTurn = color;
+}
+
+void Board::place(int startX, int startY, Type piece, Color color)
+{
+	switch (piece)
+	{
+	case Type::PAWN:
+		this->board[startX][startY] = std::make_unique<Pawn>(color);
+		break;
+	case Type::ROOK:
+		this->board[startX][startY] = std::make_unique<Rook>(color);
+		break;
+	case Type::KNIGHT:
+		this->board[startX][startY] = std::make_unique<Knight>(color);
+		break;
+	case Type::BISHOP:
+		this->board[startX][startY] = std::make_unique<Bishop>(color);
+		break;
+	case Type::QUEEN:
+		this->board[startX][startY] = std::make_unique<Queen>(color);
+		break;
+	case Type::KING:
+		this->board[startX][startY] = std::make_unique<King>(color);
+		break;
+	default:
+		throw std::invalid_argument("Invalid piece type");
+	}
 }
 
 void Board::incrementTurn()
@@ -64,6 +132,23 @@ void Board::incrementTurn()
 
 void Board::movePiece(const Coords& c)
 {
+	// En passant
+	enPassantX = -1;
+	if (this->board[c.startX][c.startY]->getType() == Type::PAWN)
+	{
+		// Set flag
+		if (c.startX == c.endX && abs(c.startY - c.endY) == 2) {
+			enPassantX = c.startX;
+		}
+		
+		// Remove En Passant-ed pawn
+		if (abs(c.startX - c.endX) == 1 && this->board[c.endX][c.endY] == nullptr) {
+			int offsetY = c.endY - Piece::getColorDirection(playerTurn);
+			this->board[c.endX][offsetY] = nullptr;
+		}
+	}
+
+	// Move piece
 	this->board[c.endX][c.endY] = std::move(this->board[c.startX][c.startY]);
 }
 
@@ -158,27 +243,36 @@ bool Board::playerHasLegalMoves(Color playerColor) const
 
 int Board::isGameOver(Color playerColor) const
 {
-	// Checkmate
-	if (isKingInCheck(playerColor) && !playerHasLegalMoves(playerColor))
-	{
-		return (playerColor == Color::BLACK) ? 1 /* White Wins */ : 2 /* Black Wins */;
+	try {
+		bool canMove = playerHasLegalMoves(playerColor);
+		bool kingInCheckBool = isKingInCheck(playerColor);
+
+		// Checkmate
+		if (kingInCheckBool && !canMove)
+		{
+			return (playerColor == Color::BLACK) ? 1 /* White Wins */ : 2 /* Black Wins */;
+		}
+		// Stalemate
+		else if (!kingInCheckBool && !canMove)
+		{
+			return 3;
+		}
+		else if (fiftyMoveCounter >= 100)
+		{
+			return 4;
+		}
+		else if (threeFoldCounter >= 3)
+		{
+			return 5;
+		}
+
+		// Game continues
+		return 0;
 	}
-	// Stalemate
-	else if (!isKingInCheck(playerColor) && !playerHasLegalMoves(playerColor))
-	{
-		return 3;
-	}
-	else if (fiftyMoveCounter >= 100)
-	{
-		return 4;
-	}
-	else if (threeFoldCounter >= 3)
-	{
-		return 5;
+	catch (const std::exception& e) {
+		return -2; // No king found
 	}
 
-	// Game continues
-	return 0;
 }
 
 Coords Board::findKing(Color playerColor) const

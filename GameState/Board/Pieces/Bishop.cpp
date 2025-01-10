@@ -1,5 +1,5 @@
 #include "Bishop.h"
-#include "Board.h"
+#include "../Board.h"
 
 Type Bishop::getType() const
 {

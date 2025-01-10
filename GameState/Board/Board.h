@@ -10,14 +10,19 @@ public:
 	Board(const Board& b);
 	~Board() = default;
 
+	// Play
 	int move(const Coords& c);
 
-	Piece* getPiece(int x, int y) const;
+	// Manage
 	void setTurnColor(Color color);
-
+	void place(int startX, int startY, Type piece, Color color);
+	Color getTurnColor() const;
+	Piece* getPiece(int x, int y) const;
+	int getEnPassantX() const;
 private:
-	void incrementTurn();
 	void movePiece(const Coords& c);
+	void incrementTurn();
+
 	bool isMoveLegal(const Coords& c) const;
 	bool isKingInCheck(Color playerColor) const;
 	bool playerHasLegalMoves(Color playerColor) const;
@@ -27,6 +32,7 @@ private:
 	int fiftyMoveCounter = 0;
 	int threeFoldCounter = 0;
 	int turnCounter = 1;
+	int enPassantX = -1; // Flag represents the x position
 	Color playerTurn = Color::WHITE;
 	std::array<std::array<std::shared_ptr<Piece>, 8>, 8> board;
 };

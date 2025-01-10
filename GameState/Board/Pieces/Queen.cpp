@@ -1,5 +1,5 @@
 #include "Queen.h"
-#include "Board.h"
+#include "../Board.h"
 
 Type Queen::getType() const
 {

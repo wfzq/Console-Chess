@@ -1,5 +1,5 @@
 #include "King.h"
-#include "Board.h"
+#include "../Board.h"
 
 Type King::getType() const
 {

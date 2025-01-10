@@ -15,8 +15,8 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Collect all source files and headers dynamically
-file(GLOB_RECURSE SOURCES "${CMAKE_SOURCE_DIR}/Board/*.cpp")
-file(GLOB_RECURSE HEADERS "${CMAKE_SOURCE_DIR}/Board/*.h")
+file(GLOB_RECURSE SOURCES "${CMAKE_SOURCE_DIR}/GameState/*.cpp")
+file(GLOB_RECURSE HEADERS "${CMAKE_SOURCE_DIR}/GameState/*.h")
 
 # Add the main source file and the collected files to the target
 add_executable(CMakeTarget "main.cpp" ${SOURCES} ${HEADERS})

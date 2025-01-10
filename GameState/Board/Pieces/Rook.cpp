@@ -1,5 +1,5 @@
 #include "Rook.h"
-#include "Board.h"
+#include "../Board.h"
 
 Type Rook::getType() const
 {

@@ -1,5 +1,5 @@
 #include "Pawn.h"
-#include "Board.h"
+#include "../Board.h"
 
 Type Pawn::getType() const
 {
@@ -44,8 +44,9 @@ bool Pawn::isValidMove(const Coords& c, const Board* board) const
 			if (c.startY == 3.5 + 0.5 * direction) {
 				if (board->getPiece(c.endX, c.endY - direction) != nullptr && 
 					board->getPiece(c.endX, c.endY - direction)->getType() == Type::PAWN && 
-					board->getPiece(c.endX, c.endY - direction)->getColor() != pieceColor) {
-					/* The flag, valid for a turn, is handled by the Board object */
+					board->getPiece(c.endX, c.endY - direction)->getColor() != pieceColor && 
+					board->getEnPassantX() == c.endX) {
+					/* The flag, valid for a turn, is set by the Board object */
 					return true;
 				}
 			}
