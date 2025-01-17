@@ -11,29 +11,29 @@
 Board::Board()
 {
 	place(0, 0, Type::ROOK, Color::WHITE);
-	place(0, 1, Type::KNIGHT, Color::WHITE);
-	place(0, 2, Type::BISHOP, Color::WHITE);
-	place(0, 3, Type::QUEEN, Color::WHITE);
-	place(0, 4, Type::KING, Color::WHITE);
-	place(0, 5, Type::BISHOP, Color::WHITE);
-	place(0, 6, Type::KNIGHT, Color::WHITE);
-	place(0, 7, Type::ROOK, Color::WHITE);
+	place(1, 0, Type::KNIGHT, Color::WHITE);
+	place(2, 0, Type::BISHOP, Color::WHITE);
+	place(3, 0, Type::QUEEN, Color::WHITE);
+	place(4, 0, Type::KING, Color::WHITE);
+	place(5, 0, Type::BISHOP, Color::WHITE);
+	place(6, 0, Type::KNIGHT, Color::WHITE);
+	place(7, 0, Type::ROOK, Color::WHITE);
 	for (int i = 0; i < 8; i++)
 	{
-		place(1, i, Type::PAWN, Color::WHITE);
+		place(i, 1, Type::PAWN, Color::WHITE);
 	}
 
-	place(7, 0, Type::ROOK, Color::BLACK);
-	place(7, 1, Type::KNIGHT, Color::BLACK);
-	place(7, 2, Type::BISHOP, Color::BLACK);
-	place(7, 3, Type::QUEEN, Color::BLACK);
-	place(7, 4, Type::KING, Color::BLACK);
-	place(7, 5, Type::BISHOP, Color::BLACK);
-	place(7, 6, Type::KNIGHT, Color::BLACK);
+	place(0, 7, Type::ROOK, Color::BLACK);
+	place(1, 7, Type::KNIGHT, Color::BLACK);
+	place(2, 7, Type::BISHOP, Color::BLACK);
+	place(3, 7, Type::QUEEN, Color::BLACK);
+	place(4, 7, Type::KING, Color::BLACK);
+	place(5, 7, Type::BISHOP, Color::BLACK);
+	place(6, 7, Type::KNIGHT, Color::BLACK);
 	place(7, 7, Type::ROOK, Color::BLACK);
 	for (int i = 0; i < 8; i++)
 	{
-		place(6, i, Type::PAWN, Color::BLACK);
+		place(i, 6, Type::PAWN, Color::BLACK);
 	}
 }
 
@@ -43,6 +43,7 @@ Board::Board(const Board& b)
 	{
 		for (int j = 0; j < 8; j++)
 		{
+			// Shallow copy
 			board[i][j] = b.board[i][j];
 		}
 	}
@@ -55,19 +56,20 @@ Board::Board(const Board& b)
 /*
 	Return values:
 	-2 - No king
-	-1 - Invalid move
+	-1 - Illegal move
 	 0 - Successful move
 	 1 - Checkmate by White
 	 2 - Checkmate by Black
-	 3 - Stalemate
-	 4 - Move results in draw by fifty-move rule
-	 5 - Move results in draw by threefold repetition
-	 6 - Move results in draw by insufficient material
+	 3 - Stalemate (Draw)
+	 4 - Draw by fifty-move rule
+	 5 - Draw by threefold repetition
+	 6 - Draw by insufficient material
  */
 int Board::move(const Coords& c)
 {
 	if (isMoveLegal(c))
 	{
+		setFlags(c);
 		movePiece(c);
 		incrementTurn();
 
@@ -87,9 +89,9 @@ Piece* Board::getPiece(int x, int y) const
 	return board[x][y].get();
 }
 
-int Board::getEnPassantX() const
+Piece* Board::getEnPassantPiece() const
 {
-	return enPassantX;
+	return enPassantPiece;
 }
 
 void Board::setTurnColor(Color color)
@@ -97,27 +99,27 @@ void Board::setTurnColor(Color color)
 	playerTurn = color;
 }
 
-void Board::place(int startX, int startY, Type piece, Color color)
+void Board::place(int x, int y, Type piece, Color color)
 {
 	switch (piece)
 	{
 	case Type::PAWN:
-		this->board[startX][startY] = std::make_unique<Pawn>(color);
+		this->board[x][y] = std::make_unique<Pawn>(color);
 		break;
 	case Type::ROOK:
-		this->board[startX][startY] = std::make_unique<Rook>(color);
+		this->board[x][y] = std::make_unique<Rook>(color);
 		break;
 	case Type::KNIGHT:
-		this->board[startX][startY] = std::make_unique<Knight>(color);
+		this->board[x][y] = std::make_unique<Knight>(color);
 		break;
 	case Type::BISHOP:
-		this->board[startX][startY] = std::make_unique<Bishop>(color);
+		this->board[x][y] = std::make_unique<Bishop>(color);
 		break;
 	case Type::QUEEN:
-		this->board[startX][startY] = std::make_unique<Queen>(color);
+		this->board[x][y] = std::make_unique<Queen>(color);
 		break;
 	case Type::KING:
-		this->board[startX][startY] = std::make_unique<King>(color);
+		this->board[x][y] = std::make_unique<King>(color);
 		break;
 	default:
 		throw std::invalid_argument("Invalid piece type");
@@ -130,26 +132,90 @@ void Board::incrementTurn()
 	turnCounter++;
 }
 
+void Board::fiftyMoveCount(const Coords& c)
+{
+	Piece* start = getPiece(c.startX, c.startY);
+	Piece* exit = getPiece(c.endX, c.endY);
+
+	if (start->getType() == Type::PAWN ||
+		exit != nullptr)
+	{
+		fiftyMoveCounter = 0;
+	}
+	else fiftyMoveCounter++;
+}
+
+void Board::threeFoldCount(const Coords& c)
+{
+	// Piece* start = getPiece(c.startX, c.startY);
+	// Piece* exit = getPiece(c.endX, c.endY);
+	// 
+	// if (fiftyMoveCounter == 0)
+	// {
+	// 	threeFoldCounter = 0;
+	// 	// threeFoldArray.clear();
+	// }
+	// // Start of turn
+	// if (playerTurn == Color::WHITE)
+	// {
+	// }
+}
+
 void Board::movePiece(const Coords& c)
 {
-	// En passant
-	enPassantX = -1;
-	if (this->board[c.startX][c.startY]->getType() == Type::PAWN)
+	this->board[c.endX][c.endY] = std::move(this->board[c.startX][c.startY]);
+}
+
+void Board::setFlags(const Coords& c)
+{
+	// Expire enemy en passant flags
+	enPassantPiece->setIsMoved(false);
+	enPassantPiece = nullptr;
+
+	// Set own flags
+	switch (special) {
+	case (int)specialCodes::MOVE:
 	{
-		// Set flag
-		if (c.startX == c.endX && abs(c.startY - c.endY) == 2) {
-			enPassantX = c.startX;
+		// Set en passant flag
+		if (getPiece(c.startX, c.startY)->getType() == Type::PAWN) {
+			enPassantPiece = getPiece(c.startX, c.startY);
 		}
-		
-		// Remove En Passant-ed pawn
-		if (abs(c.startX - c.endX) == 1 && this->board[c.endX][c.endY] == nullptr) {
-			int offsetY = c.endY - Piece::getColorDirection(playerTurn);
-			this->board[c.endX][offsetY] = nullptr;
+		// flag king or rook has moved
+		else {
+			getPiece(c.startX, c.startY)->setIsMoved(true);
 		}
+		break;
+	}
+	case (int)specialCodes::CAPTURE:
+	{
+		// Remove en passant pawn
+		this->board[c.endX][c.startY] = nullptr;
+		break;
+	}
+	case (int)specialCodes::CASTLE:
+	{
+		// Move rook
+		int rookStartX = (c.startX > c.endX ? 0 : 7);
+		int rookEndX = rookStartX == 0 ? c.endX + 1 : c.endX - 1;
+
+		movePiece({ rookStartX, c.startY, rookEndX, c.startY });
+		break;
+	}
+	case (int)specialCodes::PROMOTE:
+	{
+		// Replace pawn
+		place(c.endX, c.endY, (Type)c.promotion, playerTurn);
+		break;
+	}
+	default:
+		// Do nothing
+		break;
 	}
 
-	// Move piece
-	this->board[c.endX][c.endY] = std::move(this->board[c.startX][c.startY]);
+	special = 0; // Reset once read
+
+	fiftyMoveCount(c);
+	threeFoldCount(c);
 }
 
 bool Board::isMoveLegal(const Coords& c) const
@@ -166,17 +232,17 @@ bool Board::isMoveLegal(const Coords& c) const
 	}
 
 	// Check if it can move to the end
-	if (piece->isValidMove(c, this))
+	if (piece->isValidMove(c, this, special))
 	{
-		// Check if the move wins the game
+		// Taking enemy king overrides the normal rules
 		if (end != nullptr && end->getType() == Type::KING) {
 			return true;
 		}
 
-		// Check if it puts the player in check
 		Board temp(*this);
 		temp.movePiece(c);
 
+		// Check if it puts your king in check
 		return !temp.isKingInCheck(playerTurn);
 	}
 
@@ -278,17 +344,17 @@ int Board::isGameOver(Color playerColor) const
 Coords Board::findKing(Color playerColor) const
 {
 	Coords king;
-	for (int i = 0; i < 8; i++)
+	for (int y = 0; y < 8; y++)
 	{
-		for (int j = 0; j < 8; j++)
+		for (int x = 0; x < 8; x++)
 		{
-			Piece* piece = getPiece(i, j);
+			Piece* piece = getPiece(x, y);
 			if (piece != nullptr &&
 				piece->getType() == Type::KING &&
 				piece->getColor() == playerColor)
 			{
-				king.endX = i;
-				king.endY = j;
+				king.endX = x;
+				king.endY = y;
 				return king;
 			}
 		}

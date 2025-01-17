@@ -51,3 +51,13 @@ bool Piece::areIntermediateDiagonalSquaresEmpty(const Coords& c, const Board* bo
 bool Piece::isStartExitOnSameDiagonal(const Coords& c) {
     return abs(c.startX - c.endX) == abs(c.startY - c.endY);
 }
+
+bool Piece::getIsMoved() const
+{
+    return isMoved;
+}
+
+void Piece::setIsMoved(bool val)
+{
+    isMoved = val;
+}

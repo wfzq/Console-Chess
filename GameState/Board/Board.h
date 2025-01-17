@@ -2,10 +2,20 @@
 #include "Pieces/Abstract/Piece.h"
 #include <array>
 #include <memory>
+#include <unordered_map>
 
+// FIDE ruleset
 class Board
 {
 public:
+	enum class specialCodes : int
+	{
+		MOVE = 1,
+		CAPTURE = 2,
+		CASTLE = 3,
+		PROMOTE = 4
+	};
+
 	Board(); // Default New Game
 	Board(const Board& b);
 	~Board() = default;
@@ -18,11 +28,13 @@ public:
 	void place(int startX, int startY, Type piece, Color color);
 	Color getTurnColor() const;
 	Piece* getPiece(int x, int y) const;
-	int getEnPassantX() const;
+	Piece* getEnPassantPiece() const;
 private:
 	void movePiece(const Coords& c);
 	void incrementTurn();
-
+	void fiftyMoveCount(const Coords& c);
+	void threeFoldCount(const Coords& c);
+	void setFlags(const Coords& c);
 	bool isMoveLegal(const Coords& c) const;
 	bool isKingInCheck(Color playerColor) const;
 	bool playerHasLegalMoves(Color playerColor) const;
@@ -32,7 +44,8 @@ private:
 	int fiftyMoveCounter = 0;
 	int threeFoldCounter = 0;
 	int turnCounter = 1;
-	int enPassantX = -1; // Flag represents the x position
+	int special = 0;
+	Piece* enPassantPiece = nullptr;
 	Color playerTurn = Color::WHITE;
 	std::array<std::array<std::shared_ptr<Piece>, 8>, 8> board;
 };

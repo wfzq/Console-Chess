@@ -5,7 +5,7 @@
 
 namespace notation
 {
-	static Coords toCoords(const Board* board, std::string notation);
+	static Coords toCoords(const Board* board, std::string _notation);
 
 	// Private
 	namespace
@@ -21,47 +21,50 @@ namespace notation
 
 	static Coords toCoords(const Board* board, std::string _notation)
 	{
-		std::string notation = _notation;
-
 		// Check if string length is valid
-		if (notation.length() < 2 || notation.length() > 8) {
+		if (_notation.length() < 2 || _notation.length() > 8)
 			throw std::invalid_argument("Invalid notation string: " + _notation);
-		}
 
-		std::string notationUpper = notation;
-		std::transform(notationUpper.begin(), notationUpper.end(), notationUpper.begin(), ::toupper);
-		Color playerTurnColor = board->getTurnColor();
-
-		// Castling
-		if (notationUpper == "O-O") {
-			int king = playerTurnColor == Color::BLACK ? 7 : 0;
-			return Coords(4, king, 6, king);
-		}
-		else if (notationUpper == "O-O-O") {
-			int king = playerTurnColor == Color::BLACK ? 7 : 0;
-			return Coords(4, king, 2, king);
-		}
-
-		Coords c;
+		std::string notation = _notation;
 		char y = notation[notation.length() - 2];
 		char z = notation[notation.length() - 1];
-		int direction = Piece::getColorDirection(playerTurnColor);
 
 		// Check(mate)
 		if (z == '+' || z == '#')
 		{
-			// Remove last char, readjust string
+			// Remove last char
 			notation.pop_back();
+
+			if (notation.length() < 2)
+				throw std::invalid_argument("Invalid notation string: " + _notation);
+
+			// Reasign chars
 			y = notation[notation.length() - 2];
 			z = notation[notation.length() - 1];
 		}
 
+		Color playerTurnColor = board->getTurnColor();
+
+		{
+			// Castling
+			std::string notationUpper = notation;
+			std::transform(notationUpper.begin(), notationUpper.end(), notationUpper.begin(), ::toupper);
+			int king = playerTurnColor == Color::BLACK ? 7 : 0;
+
+			if (notationUpper == "O-O")
+				return Coords(4, king, 6, king);
+
+			else if (notationUpper == "O-O-O")
+				return Coords(4, king, 2, king);
+		}
+
 		// Promotion
+		Coords c;
 		if (y == '=' && isValidPromotionChar(z) && notation.length() >= 4)
 		{
 			c.promotion = z;
 
-			// Remove last 2 chars, readjust string
+			// Erase last 2 chars, reasign
 			notation.erase(notation.size() - 2);
 			y = notation[notation.length() - 2];
 			z = notation[notation.length() - 1];
@@ -76,6 +79,7 @@ namespace notation
 		// Assign destination
 		int endX = y - 'A';
 		int endY = z - '1';
+		int direction = Piece::getColorDirection(playerTurnColor);
 
 		// If notation is 2 characters long, it's a pawn forward move
 		if (notation.length() == 2)
@@ -83,38 +87,60 @@ namespace notation
 			int startX = endX;
 			int startY = endY - direction;
 
-			if (board->getPiece(startX, startY)->getType() == Type::PAWN) {
+			if (direction == 1 && startY < 1 || direction == -1 && startY > 6)
+				throw std::invalid_argument("Invalid notation string: " + _notation);
+
+			// Check for pawn 1 square behind
+			Piece* pawn = board->getPiece(startX, startY);
+			if (pawn != nullptr && pawn->getType() == Type::PAWN)
+			{
 				return Coords(startX, startY, endX, endY);
 			}
-			else return Coords(startX, startY - direction, endX, endY);
-		}
 
-		// Remove endX/Y chars, readjust string
-		notation.erase(notation.size() - 2);
-		y = notation[notation.length() - 2];
-		z = notation[notation.length() - 1];
-
-		// Check for captures
-		if (std::toupper(z) == 'X')
-		{
-			if (notation.length() == 1) {
-				throw std::invalid_argument("Invalid notation string: " + _notation);
+			// Check for pawn 2 squares behind
+			startY -= direction;
+			pawn = board->getPiece(startX, startY);
+			if (pawn != nullptr && pawn->getType() == Type::PAWN)
+			{
+				return Coords(startX, startY, endX, endY);
 			}
 
-			// Remove char, readjust string
+			// Throw
+			else throw std::invalid_argument("Specified piece not found");
+		}
+
+		// Cut string, readjust
+		notation.erase(notation.size() - 2);
+		z = notation[notation.length() - 1];
+
+		// Check if capture
+		if (std::toupper(z) == 'X')
+		{
+			if (notation.length() == 1)
+				throw std::invalid_argument("Invalid notation string: " + _notation);
+
+			// Remove char
 			notation.pop_back();
-			y = notation[notation.length() - 2];
-			z = notation[notation.length() - 1];
 		}
 
 		int startX = -1, startY = -1;
 		Type piece = Type::PAWN;
 
 		// Check what to move
-		if (isValidPieceChar(notation[0]))
+		if (isValidPieceChar(std::toupper(notation[0])))
 		{
-			piece = static_cast<Type>(notation[0]);
-			notation.erase(0, 1);
+			// if 'b' determine if coord or bishop
+			if (notation[0] == 'b' && 
+				board->getPiece(1, endY - direction) != nullptr && 
+				board->getPiece(1, endY - direction)->getType() == Type::PAWN) 
+			{
+				return Coords(1, endY - direction, endX, endY, c.promotion);
+			}
+			else 
+			{
+				piece = static_cast<Type>(std::toupper(notation[0]));
+				notation.erase(0, 1);
+			}
 		}
 
 		// startX and Y available
@@ -131,7 +157,8 @@ namespace notation
 			startX = y - 'A';
 			startY = z - '1';
 
-			if (board->getPiece(startX, startY)->getType() == piece) {
+			Piece* p = board->getPiece(startX, startY);
+			if (p != nullptr && p->getType() == piece) {
 				return Coords(startX, startY, endX, endY);
 			}
 			else throw std::invalid_argument("Specified piece not found");
@@ -143,12 +170,12 @@ namespace notation
 			{
 				z = std::toupper(notation[0]);
 
-				if (z < '1' || z > '8') {
-					startY = z;
+				if (z >= '1' && z <= '8') {
+					startY = z - '1';
 				}
 
-				if (y < 'A' || y > 'H') {
-					startX = z;
+				if (z >= 'A' && z <= 'H') {
+					startX = z - 'A';
 				}
 			}
 
@@ -157,19 +184,21 @@ namespace notation
 			{
 				for (int j = 0; j < 8; j++)
 				{
-					startX = startX == -1 ? i : startX;
-					startY = startY == -1 ? j : startY;
+					int currentX = (startX == -1) ? i : startX;
+					int currentY = (startY == -1) ? j : startY;
 
-					if (board->getPiece(startX, startY) != nullptr &&
-						board->getPiece(startX, startY)->getType() == piece &&
-						board->getPiece(startX, startY)->getColor() == playerTurnColor)
+					if (board->getPiece(currentX, currentY) != nullptr &&
+						board->getPiece(currentX, currentY)->getType() == piece &&
+						board->getPiece(currentX, currentY)->getColor() == playerTurnColor && 
+						board->getPiece(currentX, currentY)->isValidMove({currentX,currentY,endX,endY}, board)
+)
 					{
-						return Coords(startX, startY, endX, endY);
+						return Coords(currentX, currentY, endX, endY);
 					}
 				}
 			}
 		}
 		// This shouldn't be reached
-		throw std::invalid_argument("Invalid notation string: " + _notation);
+		throw std::invalid_argument("no move found");
 	}
 }

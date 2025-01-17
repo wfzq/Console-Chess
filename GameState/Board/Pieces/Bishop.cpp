@@ -6,7 +6,7 @@ Type Bishop::getType() const
 	return Type::BISHOP;
 }
 
-bool Bishop::isValidMove(const Coords& c, const Board* board) const
+bool Bishop::isValidMove(const Coords& c, const Board* board, int special) const
 {
 	if (isStartExitOnSameDiagonal(c))
 	{

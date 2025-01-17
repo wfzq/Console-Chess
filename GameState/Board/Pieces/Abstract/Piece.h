@@ -13,7 +13,7 @@ public:
 	Color getColor() const;
 
 	virtual Type getType() const = 0;
-	virtual bool isValidMove(const Coords& move, const Board* board) const = 0;
+	virtual bool isValidMove(const Coords& c, const Board* board, int special = 0) const = 0;
 
 	bool isEndSquareValid(const Coords& c, const Board* board) const;
 	static int getColorDirection(const Color pieceColor);
@@ -22,7 +22,11 @@ public:
 	static bool areIntermediateYSquaresEmpty(const Coords& c, const Board* board);
 	static bool areIntermediateDiagonalSquaresEmpty(const Coords& c, const Board* board);
 	static bool isStartExitOnSameDiagonal(const Coords& c);
+	
+	bool getIsMoved() const;
+	void setIsMoved(bool val);
 
 protected:
 	Color pieceColor;
+	bool isMoved = false;
 };

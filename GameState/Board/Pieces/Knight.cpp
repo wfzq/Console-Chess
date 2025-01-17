@@ -6,7 +6,7 @@ Type Knight::getType() const
 	return Type::KNIGHT;
 }
 
-bool Knight::isValidMove(const Coords& c, const Board* board) const
+bool Knight::isValidMove(const Coords& c, const Board* board, int special) const
 {
 	if (isEndSquareValid(c, board))
 	{
