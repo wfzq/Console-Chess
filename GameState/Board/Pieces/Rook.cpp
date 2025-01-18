@@ -6,7 +6,7 @@ Type Rook::getType() const
 	return Type::ROOK;
 }
 
-bool Rook::isValidMove(const Coords& c, const Board* board, int special) const
+bool Rook::isValidMove(const Coords& c, const Board* board, int &special) const
 {
 	if (isEndSquareValid(c, board))
 	{

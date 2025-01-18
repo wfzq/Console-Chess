@@ -6,7 +6,7 @@ Type King::getType() const
 	return Type::KING;
 }
 
-bool King::isValidMove(const Coords& c, const Board* board, int special) const
+bool King::isValidMove(const Coords& c, const Board* board, int& special) const
 {
 	bool isWhite = this->getColor() == Color::WHITE;
 	if (abs(c.startX - c.endX) <= 1 && abs(c.startY - c.endY) <= 1)
@@ -21,9 +21,9 @@ bool King::isValidMove(const Coords& c, const Board* board, int special) const
 		int rookX = (c.startX > c.endX ? 0 : 7);
 		kingToRook.endX = rookX;
 
-		if (!this->getIsMoved() && 
-			!board->getPiece(rookX, c.endY)->getIsMoved() &&
-			areIntermediateXSquaresEmpty(kingToRook, board)) 
+		Piece* rook = board->getPiece(rookX, c.endY);
+		if (!this->getIsMoved() && rook != nullptr && !rook->getIsMoved() &&
+			areIntermediateXSquaresEmpty(kingToRook, board))
 		{
 			special = 3;
 			return true;

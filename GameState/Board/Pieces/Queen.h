@@ -8,5 +8,5 @@ public:
 	~Queen() = default;
 	
 	Type getType() const override;
-	bool isValidMove(const Coords& c, const Board* board, int special = 0) const override;
+	bool isValidMove(const Coords& c, const Board* board, int &special) const override;
 };

@@ -6,7 +6,7 @@ Type Pawn::getType() const
 	return Type::PAWN;
 }
 
-bool Pawn::isValidMove(const Coords& c, const Board* board, int special) const
+bool Pawn::isValidMove(const Coords& c, const Board* board, int &special) const
 {
 	int direction = getColorDirection(pieceColor);
 

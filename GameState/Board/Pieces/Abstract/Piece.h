@@ -13,7 +13,7 @@ public:
 	Color getColor() const;
 
 	virtual Type getType() const = 0;
-	virtual bool isValidMove(const Coords& c, const Board* board, int special = 0) const = 0;
+	virtual bool isValidMove(const Coords& c, const Board* board, int &special) const = 0;
 
 	bool isEndSquareValid(const Coords& c, const Board* board) const;
 	static int getColorDirection(const Color pieceColor);

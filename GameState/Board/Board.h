@@ -16,11 +16,12 @@ public:
 		PROMOTE = 4
 	};
 
-	Board(); // Default New Game
+	Board() = default;
 	Board(const Board& b);
 	~Board() = default;
 
 	// Play
+	void newGame();
 	int move(const Coords& c);
 
 	// Manage
@@ -29,16 +30,16 @@ public:
 	Color getTurnColor() const;
 	Piece* getPiece(int x, int y) const;
 	Piece* getEnPassantPiece() const;
+	int isGameOver(Color playerColor) const;
 private:
 	void movePiece(const Coords& c);
 	void incrementTurn();
 	void fiftyMoveCount(const Coords& c);
 	void threeFoldCount(const Coords& c);
 	void setFlags(const Coords& c);
-	bool isMoveLegal(const Coords& c) const;
+	bool isMoveLegal(const Coords& c, int &special) const;
 	bool isKingInCheck(Color playerColor) const;
 	bool playerHasLegalMoves(Color playerColor) const;
-	int isGameOver(Color playerColor) const;
 	Coords findKing(Color playerColor) const;
 
 	int fiftyMoveCounter = 0;

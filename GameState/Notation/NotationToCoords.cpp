@@ -180,6 +180,7 @@ namespace notation
 			}
 
 			// Inefficient, check all squares
+			int dummy;
 			for (int i = 0; i < 8; i++)
 			{
 				for (int j = 0; j < 8; j++)
@@ -190,7 +191,7 @@ namespace notation
 					if (board->getPiece(currentX, currentY) != nullptr &&
 						board->getPiece(currentX, currentY)->getType() == piece &&
 						board->getPiece(currentX, currentY)->getColor() == playerTurnColor && 
-						board->getPiece(currentX, currentY)->isValidMove({currentX,currentY,endX,endY}, board)
+						board->getPiece(currentX, currentY)->isValidMove({currentX,currentY,endX,endY}, board, dummy)
 )
 					{
 						return Coords(currentX, currentY, endX, endY);

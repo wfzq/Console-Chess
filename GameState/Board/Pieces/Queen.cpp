@@ -6,7 +6,7 @@ Type Queen::getType() const
 	return Type::QUEEN;
 }
 
-bool Queen::isValidMove(const Coords& c, const Board* board, int special) const
+bool Queen::isValidMove(const Coords& c, const Board* board, int &special) const
 {
 	if (isEndSquareValid(c, board))
 	{

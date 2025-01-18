@@ -8,7 +8,23 @@
 #include "Pieces/Queen.h"
 #include "Pieces/King.h"
 
-Board::Board()
+Board::Board(const Board& b)
+{
+	for (int i = 0; i < 8; i++)
+	{
+		for (int j = 0; j < 8; j++)
+		{
+			// Shallow copy
+			board[i][j] = b.board[i][j];
+		}
+	}
+	playerTurn = b.playerTurn;
+	fiftyMoveCounter = b.fiftyMoveCounter;
+	threeFoldCounter = b.threeFoldCounter;
+	turnCounter = b.turnCounter;
+}
+
+void Board::newGame()
 {
 	place(0, 0, Type::ROOK, Color::WHITE);
 	place(1, 0, Type::KNIGHT, Color::WHITE);
@@ -37,22 +53,6 @@ Board::Board()
 	}
 }
 
-Board::Board(const Board& b)
-{
-	for (int i = 0; i < 8; i++)
-	{
-		for (int j = 0; j < 8; j++)
-		{
-			// Shallow copy
-			board[i][j] = b.board[i][j];
-		}
-	}
-	playerTurn = b.playerTurn;
-	fiftyMoveCounter = b.fiftyMoveCounter;
-	threeFoldCounter = b.threeFoldCounter;
-	turnCounter = b.turnCounter;
-}
-
 /*
 	Return values:
 	-2 - No king
@@ -67,7 +67,7 @@ Board::Board(const Board& b)
  */
 int Board::move(const Coords& c)
 {
-	if (isMoveLegal(c))
+	if (isMoveLegal(c, special))
 	{
 		setFlags(c);
 		movePiece(c);
@@ -169,8 +169,11 @@ void Board::movePiece(const Coords& c)
 void Board::setFlags(const Coords& c)
 {
 	// Expire enemy en passant flags
-	enPassantPiece->setIsMoved(false);
-	enPassantPiece = nullptr;
+	if (enPassantPiece != nullptr) 
+	{
+		enPassantPiece->setIsMoved(false);
+		enPassantPiece = nullptr;
+	}
 
 	// Set own flags
 	switch (special) {
@@ -218,8 +221,12 @@ void Board::setFlags(const Coords& c)
 	threeFoldCount(c);
 }
 
-bool Board::isMoveLegal(const Coords& c) const
+bool Board::isMoveLegal(const Coords& c, int &special) const
 {
+	// Check for no movement
+	if (c.startX == c.endX && c.startY == c.endY)
+		return false;
+
 	Piece* piece = getPiece(c.startX, c.startY);
 	Piece* end = getPiece(c.endX, c.endY);
 
@@ -256,7 +263,7 @@ bool Board::isKingInCheck(Color playerColor) const
 
 	Board temp(*this);
 	temp.setTurnColor(enemyColor);
-
+	int dummy;
 	for (int y = 0; y < 8; ++y)
 	{
 		for (int x = 0; x < 8; ++x)
@@ -268,7 +275,7 @@ bool Board::isKingInCheck(Color playerColor) const
 			{
 				toKing.startX = x;
 				toKing.startY = y;
-				if (piece->isValidMove(toKing, &temp)) {
+				if (piece->isValidMove(toKing, &temp, dummy)) {
 					return true;
 				}
 			}
@@ -280,6 +287,7 @@ bool Board::isKingInCheck(Color playerColor) const
 bool Board::playerHasLegalMoves(Color playerColor) const
 {
 	Coords c;
+	int dummy;
 	for (int y = 0; y < 8; y++)
 	{
 		for (int x = 0; x < 8; x++)
@@ -290,14 +298,14 @@ bool Board::playerHasLegalMoves(Color playerColor) const
 				c.startY = y;
 				c.startX = x;
 
-				for (int yd = 0; yd < 8; yd++)
+				for (int ey = 0; ey < 8; ey++)
 				{
-					for (int xd = 0; xd < 8; xd++)
+					for (int ex = 0; ex < 8; ex++)
 					{
-						c.endX = xd;
-						c.endY = yd;
+						c.endX = ex;
+						c.endY = ey;
 
-						if (isMoveLegal(c))
+						if (isMoveLegal(c, dummy))
 							return true;
 					}
 				}
